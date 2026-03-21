@@ -7,12 +7,14 @@ that could harm the system.
 Hook Type: PreToolUse
 Target: Bash tool with dangerous patterns
 """
-from datetime import datetime
+import re
 
 
-async def block_dangerous_commands(input_data, tool_use_id, context):
+async def pre_tool_use_hook(input_data, tool_use_id, context):
     """
-    Block dangerous bash commands like 'rm -rf', 'format', etc.
+    Block dangerous bash commands like 'rm -rf', 'format', fork bombs, etc.
+
+    Uses regex pattern matching to detect dangerous commands.
 
     Args:
         input_data: Dict containing tool_name and tool_input
@@ -29,20 +31,21 @@ async def block_dangerous_commands(input_data, tool_use_id, context):
     if tool_name == "bash":
         command = tool_input.get("command", "")
 
-        # Define dangerous patterns that could harm the system
+        # Define dangerous regex patterns that could harm the system
         dangerous_patterns = [
-            "rm -rf",           # Recursive delete
-            "format",           # Disk formatting (Windows)
-            "mkfs",             # File system creation
-            "dd if=",           # Direct disk write
-            "> /dev/",          # Writing to devices
-            "fdisk",            # Partition manipulation
-            "mkswap",           # Swap creation
+            r"rm\s+-rf\s+/",           # Recursive delete from root
+            r":\(\)\{.*\|.*&.*\};:",   # Fork bomb (function with pipe and background)
+            r"format",                 # Disk formatting (Windows)
+            r"mkfs",                   # File system creation
+            r"dd\s+if=",               # Direct disk write
+            r">\s*/dev/",              # Writing to devices
+            r"fdisk",                  # Partition manipulation
+            r"mkswap",                 # Swap creation
         ]
 
-        # Check if command contains any dangerous pattern
+        # Check if command matches any dangerous pattern
         for pattern in dangerous_patterns:
-            if pattern in command:
+            if re.search(pattern, command):
                 return {
                     "hookSpecificOutput": {
                         "hookEventName": "PreToolUse",

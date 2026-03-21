@@ -21,8 +21,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from tools.calculator import calculate_tool
-from hooks.command_blocker import block_dangerous_commands
-from hooks.audit_logger import log_tool_use
+from hooks.command_blocker import pre_tool_use_hook as block_dangerous_commands
+from hooks.audit_logger import pre_tool_use_hook as log_tool_use_pre
+from hooks.audit_logger import post_tool_use_hook as log_tool_use_post
 
 
 async def demonstrate_hooks():
@@ -52,22 +53,24 @@ async def demonstrate_hooks():
         print(f"   ✗ Unexpected result: {result}")
 
     print("\n2. Testing dangerous command (should be BLOCKED):")
-    dangerous_command = {
-        "tool_name": "bash",
-        "tool_input": {"command": "rm -rf /important/data"}
-    }
-    result = await block_dangerous_commands(dangerous_command, "test-id-2", {})
-    if result.get("hookSpecificOutput", {}).get("permissionDecision") == "deny":
-        print("   ✓ Dangerous command blocked!")
-        print(f"   Reason: {result['hookSpecificOutput']['permissionDecisionReason']}")
-    else:
-        print(f"   ✗ Command was not blocked: {result}")
+    dangerous_commands = [
+        {"tool_name": "bash", "tool_input": {"command": "rm -rf /important/data"}},
+        {"tool_name": "bash", "tool_input": {"command": ":(){:|:&};:"}},  # Fork bomb
+    ]
 
-    # Hook 2: Audit Logger
+    for dangerous_command in dangerous_commands:
+        result = await block_dangerous_commands(dangerous_command, "test-id-2", {})
+        if result.get("hookSpecificOutput", {}).get("permissionDecision") == "deny":
+            print(f"   ✓ Dangerous command blocked: {dangerous_command['tool_input']['command']}")
+            print(f"   Reason: {result['hookSpecificOutput']['permissionDecisionReason']}")
+        else:
+            print(f"   ✗ Command was not blocked: {result}")
+
+    # Hook 2: Audit Logger (PreToolUse)
     print("\n" + "-" * 70)
-    print("Hook 2: Audit Logger")
+    print("Hook 2: Audit Logger (PreToolUse)")
     print("-" * 70)
-    print("\nLogging tool invocations... (check console output below)")
+    print("\nLogging tool invocations BEFORE execution... (check console output below)")
 
     # Simulate tool invocations
     tool_calls = [
@@ -78,9 +81,27 @@ async def demonstrate_hooks():
 
     for i, tool_call in enumerate(tool_calls, 1):
         print(f"\n{i}. Calling: {tool_call['tool_name']}")
-        await log_tool_use(tool_call, f"tool-use-{i}", {})
+        await log_tool_use_pre(tool_call, f"tool-use-{i}", {})
 
-    print("\n✓ All tool invocations logged to audit.log")
+    print("\n✓ All tool invocations logged to audit.log (PreToolUse)")
+
+    # Hook 2b: Audit Logger (PostToolUse)
+    print("\n" + "-" * 70)
+    print("Hook 2b: Audit Logger (PostToolUse)")
+    print("-" * 70)
+    print("\nLogging tool execution results AFTER execution...")
+
+    # Simulate tool outputs
+    tool_outputs = [
+        ("tool-use-1", {"content": [{"type": "text", "text": "50"}]}),
+        ("tool-use-2", {"content": [{"type": "text", "text": "Hello, Hooks!"}]}),
+        ("tool-use-3", {"content": [{"type": "text", "text": "4"}]}),
+    ]
+
+    for tool_use_id, tool_output in tool_outputs:
+        await log_tool_use_post(tool_use_id, tool_output, {})
+
+    print("\n✓ All tool results logged to audit.log (PostToolUse)")
 
     # Demonstrate with calculator tool
     print("\n" + "-" * 70)
@@ -99,9 +120,9 @@ async def demonstrate_hooks():
     print(f"\nTool call: {calculator_input['tool_name']}")
     print(f"Input: {calculator_input['tool_input']}")
 
-    # Apply audit logger hook
-    print("\n[Applying Audit Logger Hook]")
-    await log_tool_use(calculator_input, "calc-use-1", {})
+    # Apply audit logger pre-hook
+    print("\n[Applying Audit Logger PreToolUse Hook]")
+    await log_tool_use_pre(calculator_input, "calc-use-1", {})
 
     # Apply command blocker hook (should allow calculator)
     print("[Applying Command Blocker Hook]")
@@ -113,6 +134,11 @@ async def demonstrate_hooks():
         # Execute the actual tool
         tool_result = await calculate_tool.handler(calculator_input["tool_input"])
         print(f"Tool result: {tool_result['content'][0]['text']}")
+
+        # Apply audit logger post-hook
+        print("\n[Applying Audit Logger PostToolUse Hook]")
+        await log_tool_use_post("calc-use-1", tool_result, {})
+        print("✓ Tool result logged")
     else:
         print(f"✗ Unexpected block: {blocker_result}")
 
@@ -122,14 +148,15 @@ async def demonstrate_hooks():
     print("="*70)
     print("\nKey Takeaways:")
     print("  ✓ Hooks intercept tool execution (PreToolUse/PostToolUse)")
+    print("  ✓ Hooks use SDK interface: pre_tool_use_hook and post_tool_use_hook")
     print("  ✓ Hooks can deny execution for security/safety")
-    print("  ✓ Hooks can log/audit all tool invocations")
+    print("  ✓ Hooks can log/audit all tool invocations and results")
     print("  ✓ Hooks return empty dict for no-op, or dict with decisions")
     print("\nUse Cases:")
-    print("  • Security: Block dangerous commands")
-    print("  • Compliance: Audit all tool usage")
-    print("  • Debugging: Log inputs/outputs")
-    print("  • Monitoring: Track agent behavior")
+    print("  • Security: Block dangerous commands (rm -rf, fork bombs)")
+    print("  • Compliance: Audit all tool usage and results")
+    print("  • Debugging: Log inputs/outputs with timestamps")
+    print("  • Monitoring: Track agent behavior and performance")
     print("="*70 + "\n")
 
 
