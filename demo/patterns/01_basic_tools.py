@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from tools.calculator import calculate_tool
 import asyncio
 
-async def run():
+def run():
     print("\n--- Pattern 1: Custom Tools ---")
     print("This pattern demonstrates creating custom tools with the @tool decorator.\n")
 
@@ -14,12 +14,13 @@ async def run():
     # This shows that the @tool decorator works and the tool functions correctly
     print("Testing custom tool implementation...")
 
-    # Test the tool directly
-    result = await calculate_tool.handler({"a": 25, "b": 4, "operation": "multiply"})
+    # Test the tool directly using asyncio
+    import asyncio
+    result = asyncio.run(calculate_tool.handler({"a": 25, "b": 4, "operation": "multiply"}))
     print(f"Direct tool test result: {result}")
 
     # Test error handling
-    error_result = await calculate_tool.handler({"a": 10, "b": 0, "operation": "divide"})
+    error_result = asyncio.run(calculate_tool.handler({"a": 10, "b": 0, "operation": "divide"}))
     print(f"Error handling test: {error_result}")
 
     print("\nNote: The @tool decorator is working correctly, but CLI integration requires additional setup.")
@@ -29,4 +30,4 @@ async def run():
     print("Or test it with: 'python tools/test_calculator.py'")
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    run()
