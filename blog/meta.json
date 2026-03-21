@@ -1,0 +1,72 @@
+{
+  "title": "Building Production AI Agents with Claude Agent SDK Python: A Progressive Pattern Guide",
+  "slug": "claude-agent-sdk-python-progressive-patterns",
+  "date": "2026-03-21",
+  "author": "AI Keytake",
+  "description": "Learn how to build production AI agents with Claude Agent SDK Python through 4 progressive patterns: custom tools, hooks, permissions, and complete agents. This comprehensive tutorial covers everything from basic tool creation to production-ready agent deployment.",
+  "tags": ["AI", "Python", "Claude", "Agent SDK", "Tutorial", "Production", "Best Practices"],
+  "difficulty": "intermediate",
+  "estimated_time": "45 minutes",
+  "demo_url": "https://github.com/your-repo/claude-agent-sdk-python-demo",
+  "status": "draft",
+  "word_count": 3800,
+  "reading_time_minutes": 45,
+  "prerequisites": [
+    "Python 3.10+",
+    "Basic understanding of async/await",
+    "Familiarity with AI/LLM concepts",
+    "45 minutes to complete the tutorial"
+  ],
+  "learning_objectives": [
+    "Build production AI agents with Claude Agent SDK Python",
+    "Implement custom tools using the @tool decorator",
+    "Add security and observability with hooks",
+    "Control tool access with tiered permissions",
+    "Follow best practices for production deployments"
+  ],
+  "sections": [
+    {
+      "title": "Introduction",
+      "word_count": 200
+    },
+    {
+      "title": "Pattern 1: Custom Tools",
+      "word_count": 800
+    },
+    {
+      "title": "Pattern 2: Hooks for Control",
+      "word_count": 800
+    },
+    {
+      "title": "Pattern 3: Permission Management",
+      "word_count": 600
+    },
+    {
+      "title": "Pattern 4: Complete Agent",
+      "word_count": 800
+    },
+    {
+      "title": "Best Practices",
+      "word_count": 600
+    },
+    {
+      "title": "Conclusion",
+      "word_count": 200
+    }
+  ],
+  "seo_keywords": [
+    "Claude Agent SDK Python",
+    "AI agents",
+    "production AI agents",
+    "Python AI development",
+    "custom tools",
+    "AI hooks",
+    "permission management",
+    "Claude AI tutorial",
+    "AI agent best practices",
+    "async Python"
+  ],
+  "target_audience": "Intermediate Python developers (3-5 years experience)",
+  "published": false,
+  "featured_image": "blog/images/claude-agent-sdk-cover.png"
+}
