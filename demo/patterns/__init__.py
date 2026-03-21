@@ -12,9 +12,11 @@ if str(patterns_dir) not in sys.path:
 pattern_01_basic_tools = import_module("01_basic_tools")
 pattern_02_with_hooks = import_module("02_with_hooks")
 pattern_03_with_permissions = import_module("03_with_permissions")
+pattern_04_complete_agent = import_module("04_complete_agent")
 
 __all__ = [
     "pattern_01_basic_tools",
     "pattern_02_with_hooks",
     "pattern_03_with_permissions",
+    "pattern_04_complete_agent",
 ]
