@@ -26,77 +26,65 @@ pytest patterns/test_deep_research.py -v
 ## Architecture
 
 **Pattern 5 (Deep Research Agent):**
-- **ClaudeSDKClient**: Automatic session management (continue/resume/fork)
-- **Agent Loop**: Multi-turn reasoning without custom loops
-- **settingSources**: Loads CLAUDE.md and skills from `.claude/skills/`
-- **Web Search**: Built-in `web_search` tool for finding documentation
-- **Effort Levels**: Controls reasoning depth (low/medium/high/max)
+- **ClaudeSDKClient**: Session management
+- **connect()**: Must connect before querying
+- **query()**: Send prompts with session_id parameter
+- **receive_messages()**: Async generator that streams Claude's responses
+- **disconnect()**: Clean up connection
 
 **Key Pattern:**
 ```python
-from claude_agent_sdk import ClaudeSDKClient, query, ClaudeAgentOptions
+from claude_agent_sdk import ClaudeSDKClient
+import uuid
 
 client = ClaudeSDKClient()
+await client.connect()
 
-# Agent creates session automatically
-async for message in query(
+# Create a unique session ID
+session_id = f"research-{uuid.uuid4().hex[:8]}"
+
+# Phase 1: Initial research
+await client.query(
     prompt="Research topic...",
-    options=ClaudeAgentOptions(
-        setting_sources=["project"],  # Loads CLAUDE.md + skills
-        allowed_tools=["Skill", "Read", "Bash", "web_search"],
-        effort="high"  # Deeper reasoning per turn
-    )
-):
-    print(message)
+    session_id=session_id
+)
 
-# Continue same session
-session_id = client.get_most_recent_session_id()
-async for message in query(
+async for message in client.receive_messages():
+    print(message.content)
+
+# Phase 2: Continue same session (context preserved!)
+await client.query(
     prompt="Deepen analysis...",
-    options=ClaudeAgentOptions(session_id=session_id)
-):
-    print(message)
+    session_id=session_id  # Same ID = continues conversation
+)
+
+async for message in client.receive_messages():
+    print(message.content)
+
+await client.disconnect()
 ```
 
-## Skills System
+## Session Management
 
-Skills are markdown files at `.claude/skills/<name>/SKILL.md` that provide domain expertise to the agent.
-
-**Example Skill Structure:**
-```markdown
----
-name: research
-description: Research methodology for deep analysis
----
-
-# Research Methodology
-
-## Phase 1: Information Gathering
-- Search official documentation
-- Find comparison guides
-- Identify key differentiators
-
-## Phase 2: Analysis
-- Compare architecture patterns
-- Evaluate use cases
-- Assess trade-offs
-```
-
-The agent loads skills on-demand via the `Skill` tool when `setting_sources=["project"]` is enabled.
-
-## Session Operations
+**Session IDs**: You manage them yourself
+- Session IDs are just strings (you create them)
+- Use descriptive names like `research-20250321-a3f2b1c9`
+- Same session ID = continues conversation (context preserved)
+- Different session ID = fresh conversation (no context)
 
 **Continue**: Multiple `query()` calls with same `session_id`
 - Context accumulates across turns
 - Agent maintains conversation state
 
-**Resume**: Load specific session by ID
-- `client.get_session(session_id)`
+**Resume**: Store session IDs for later use
+- Save session IDs in a database or file
+- Reuse the same session ID to resume conversations
 - Useful for long-running research tasks
 
-**Fork**: Create new session from existing
-- `fork_from=session_id` in options
-- Explore alternative directions without changing original
+**Fork**: Create a new session ID for exploration
+- Use a different session ID to explore alternatives
+- Original session stays untouched
+- Explore tangents without losing your main thread
 
 ## Testing
 

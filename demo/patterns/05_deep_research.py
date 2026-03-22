@@ -1,39 +1,39 @@
 #!/usr/bin/env python3
 """
-Pattern 5: Deep Research Agent with Sessions and Skills
+Pattern 5: Deep Research Agent with Sessions
 
 This demo showcases advanced Claude Agent SDK Python features:
-- ClaudeSDKClient for automatic session management
-- Agent loop for multi-turn reasoning
-- settingSources to load CLAUDE.md and skills
-- Session operations: continue, resume, fork
-- Web search integration for finding documentation
+- ClaudeSDKClient for session management
+- Session persistence across multiple conversation turns
+- Continuing conversations with session_id
+- Forking sessions to explore alternatives
 
-The agent performs a literature review comparing three AI agent frameworks:
-- LangGraph (LangChain)
-- AutoGen (Microsoft)
-- Claude Agent SDK (Anthropic)
+The agent compares three AI agent frameworks:
+- LangGraph (from LangChain)
+- AutoGen (from Microsoft)
+- Claude Agent SDK (from Anthropic)
 
 Usage:
     python patterns/05_deep_research.py
 
 The demo runs in four phases:
-1. Initial research - Agent searches web, analyzes frameworks
+1. Initial research - Agent does quick web search for basic info
 2. User feedback - Manual pause to get human direction
 3. Refined analysis - Agent focuses on specific aspect
 4. Fork session - Optional exploration of alternative direction
 
-Expected output: 1-2 page summary report in Markdown format
+Expected output: Concise summaries of each framework
 """
 import asyncio
 import sys
 from pathlib import Path
+import uuid
 
 # Add demo directory to path for imports
 demo_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(demo_dir))
 
-from claude_agent_sdk import ClaudeSDKClient, query, ClaudeAgentOptions
+from claude_agent_sdk import ClaudeSDKClient
 
 
 def print_separator(title: str = "") -> None:
@@ -46,70 +46,70 @@ def print_separator(title: str = "") -> None:
         print("=" * width)
 
 
-def print_message(message) -> None:
-    """Print a message from the agent."""
-    if hasattr(message, 'content'):
-        print(message.content, end='', flush=True)
-    else:
-        print(str(message), end='', flush=True)
-
-
-async def phase_1_initial_research(client: ClaudeSDKClient) -> str:
+async def phase_1_initial_research(client: ClaudeSDKClient, session_id: str) -> None:
     """
-    Phase 1: Initial broad research on all three frameworks.
+    Phase 1: Initial quick research on all three frameworks.
 
-    Agent uses web search to find official documentation and comparison guides.
-    Agent loop handles multi-turn reasoning automatically.
+    Agent uses web search to find basic information about each framework.
+    Keeps it simple - what it is, use cases, and key features.
 
-    Returns:
-        Session ID for continuation
+    Args:
+        client: ClaudeSDKClient instance
+        session_id: Session ID to use for this phase
     """
     print_separator("PHASE 1: Initial Research")
 
     prompt = """
-    Please conduct a literature review comparing these three AI agent frameworks:
+    Search the web for information about these three AI agent frameworks:
     1. LangGraph (from LangChain)
     2. AutoGen (from Microsoft)
     3. Claude Agent SDK (from Anthropic)
 
-    For each framework, identify:
-    - Core architecture and design philosophy
-    - Key features and capabilities
-    - Primary use cases and target applications
-    - Strengths and weaknesses
+    For each framework, provide a brief summary covering:
+    - What it is
+    - Main use cases
+    - Key features
 
-    Use web search to find official documentation and comparison guides.
-    Provide a 1-2 page summary report in Markdown format with proper source citations.
+    Keep it concise - just the essentials.
     """
 
     try:
-        async for message in query(
+        # Send the prompt
+        await client.query(
             prompt=prompt,
-            options=ClaudeAgentOptions(
-                setting_sources=["project"],  # Loads CLAUDE.md and skills
-                allowed_tools=[
-                    "Skill",      # Load research methodology
-                    "Read",       # Read CLAUDE.md
-                    "Bash",       # Run commands if needed
-                    "web_search"  # Search for documentation
-                ],
-                effort="high"  # Deeper reasoning per turn
-            )
-        ):
-            print_message(message)
+            session_id=session_id
+        )
 
-        # Get session ID from client after query completes
-        session_id = client.get_most_recent_session_id()
+        # Receive and print messages
+        message_count = 0
+        max_messages = 100  # Safety limit to prevent infinite loops
+
+        async for message in client.receive_messages():
+            message_count += 1
+            if message_count > max_messages:
+                print("\n\n[Message limit reached, stopping...]")
+                break
+
+            # Only print text content, skip internal system messages
+            if hasattr(message, 'content'):
+                print(message.content, end='', flush=True)
+            elif hasattr(message, 'text'):
+                print(message.text, end='', flush=True)
+            # Check if this is a result message (end of response)
+            elif hasattr(message, 'stop_reason'):
+                # End of turn reached
+                break
+            # Skip SystemMessage, ThinkingBlock, ToolUseBlock, ToolResultBlock, etc.
+            # These are internal debug messages, not user-facing content
 
         print(f"\n\n✓ Phase 1 complete. Session ID: {session_id}")
-        return session_id
 
     except Exception as e:
         print(f"\n\n✗ Phase 1 failed: {e}")
         raise
 
 
-async def phase_2_user_feedback() -> str:
+def phase_2_user_feedback() -> str:
     """
     Phase 2: Manual pause for human direction.
 
@@ -159,7 +159,7 @@ async def phase_3_refined_analysis(
 
     Args:
         client: ClaudeSDKClient instance
-        session_id: Session ID from Phase 1
+        session_id: Session ID to use for this phase
         direction: User's chosen focus area
     """
     print_separator("PHASE 3: Refined Analysis")
@@ -174,16 +174,33 @@ async def phase_3_refined_analysis(
     """
 
     try:
-        async for message in query(
+        # Send the prompt
+        await client.query(
             prompt=prompt,
-            options=ClaudeAgentOptions(
-                setting_sources=["project"],
-                allowed_tools=["Skill", "Read", "Bash", "web_search"],
-                session_id=session_id,  # Continue same session
-                effort="high"
-            )
-        ):
-            print_message(message)
+            session_id=session_id
+        )
+
+        # Receive and print messages
+        message_count = 0
+        max_messages = 100  # Safety limit to prevent infinite loops
+
+        async for message in client.receive_messages():
+            message_count += 1
+            if message_count > max_messages:
+                print("\n\n[Message limit reached, stopping...]")
+                break
+
+            # Only print text content, skip internal system messages
+            if hasattr(message, 'content'):
+                print(message.content, end='', flush=True)
+            elif hasattr(message, 'text'):
+                print(message.text, end='', flush=True)
+            # Check if this is a result message (end of response)
+            elif hasattr(message, 'stop_reason'):
+                # End of turn reached
+                break
+            # Skip SystemMessage, ThinkingBlock, ToolUseBlock, ToolResultBlock, etc.
+            # These are internal debug messages, not user-facing content
 
         print("\n\n✓ Phase 3 complete. Session updated with refined analysis.")
 
@@ -199,12 +216,12 @@ async def phase_4_optional_fork(
     """
     Phase 4: Optional fork to explore alternative direction.
 
-    Forking creates a new session with copied history,
-    allowing exploration without changing the original.
+    Creates a new session with a different ID to explore alternatives
+    without changing the original session.
 
     Args:
         client: ClaudeSDKClient instance
-        original_session_id: Session ID to fork from
+        original_session_id: Original session ID (not modified)
     """
     print_separator("PHASE 4: Optional Fork")
 
@@ -214,8 +231,12 @@ async def phase_4_optional_fork(
         print("Skipping fork phase.")
         return
 
+    # Create a new session ID for the fork
+    fork_session_id = f"{original_session_id}-fork"
+
     print("\n🔀 Creating forked session to explore alternative direction...")
-    print("This creates a new session with copied history.")
+    print(f"Original session: {original_session_id}")
+    print(f"Fork session: {fork_session_id}")
     print("The original session remains unchanged.")
 
     prompt = """
@@ -228,20 +249,37 @@ async def phase_4_optional_fork(
     - Third-party integrations and extensions
     - Commercial support and backing
 
-    This analysis starts fresh from the forked point.
+    This analysis starts fresh in the forked session.
     """
 
     try:
-        async for message in query(
+        # Send the prompt
+        await client.query(
             prompt=prompt,
-            options=ClaudeAgentOptions(
-                setting_sources=["project"],
-                allowed_tools=["Skill", "Read", "Bash", "web_search"],
-                fork_from=original_session_id,  # Fork: new session with copied history
-                effort="medium"
-            )
-        ):
-            print_message(message)
+            session_id=fork_session_id
+        )
+
+        # Receive and print messages
+        message_count = 0
+        max_messages = 100  # Safety limit to prevent infinite loops
+
+        async for message in client.receive_messages():
+            message_count += 1
+            if message_count > max_messages:
+                print("\n\n[Message limit reached, stopping...]")
+                break
+
+            # Only print text content, skip internal system messages
+            if hasattr(message, 'content'):
+                print(message.content, end='', flush=True)
+            elif hasattr(message, 'text'):
+                print(message.text, end='', flush=True)
+            # Check if this is a result message (end of response)
+            elif hasattr(message, 'stop_reason'):
+                # End of turn reached
+                break
+            # Skip SystemMessage, ThinkingBlock, ToolUseBlock, ToolResultBlock, etc.
+            # These are internal debug messages, not user-facing content
 
         print("\n\n✓ Phase 4 complete. Forked session created.")
 
@@ -256,8 +294,7 @@ async def main() -> None:
     print("\nThis demo showcases:")
     print("  • ClaudeSDKClient for session management")
     print("  • Agent loop for multi-turn reasoning")
-    print("  • settingSources to load CLAUDE.md and skills")
-    print("  • Session operations: continue, resume, fork")
+    print("  • Session persistence across multiple turns")
     print("  • Web search for finding documentation")
     print()
 
@@ -266,15 +303,26 @@ async def main() -> None:
         print("Demo cancelled.")
         return
 
-    # Initialize client (handles sessions automatically)
+    # Initialize client
     client = ClaudeSDKClient()
+
+    # Connect to Claude Code
+    print("Connecting to Claude Code...")
+    await client.connect()
+    print("✓ Connected\n")
+
+    # Generate a unique session ID for this demo run
+    session_id = f"research-{uuid.uuid4().hex[:8]}"
+
+    print(f"📝 Session ID: {session_id}")
+    print("This session will persist across all phases.\n")
 
     try:
         # Phase 1: Initial research
-        session_id = await phase_1_initial_research(client)
+        await phase_1_initial_research(client, session_id)
 
         # Phase 2: User feedback
-        direction = await phase_2_user_feedback()
+        direction = phase_2_user_feedback()
 
         # Phase 3: Refined analysis (continues session)
         await phase_3_refined_analysis(client, session_id, direction)
@@ -284,15 +332,20 @@ async def main() -> None:
 
         print_separator("Demo Complete")
         print("\n✓ All phases finished successfully!")
-        print(f"\nSession ID: {session_id}")
-        print("You can resume this session later using the session ID.")
+        print(f"\nMain Session ID: {session_id}")
+        print("You can use this session ID to resume the conversation later.")
+
+        # Disconnect
+        await client.disconnect()
 
     except KeyboardInterrupt:
         print("\n\nDemo interrupted by user.")
+        await client.disconnect()
     except Exception as e:
         print(f"\n\nDemo failed with error: {e}")
         import traceback
         traceback.print_exc()
+        await client.disconnect()
 
 
 if __name__ == "__main__":
