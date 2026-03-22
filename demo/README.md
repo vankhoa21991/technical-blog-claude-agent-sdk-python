@@ -57,10 +57,11 @@ Claude Agent SDK Python - Progressive Patterns
 2. Pattern 2: Add Hooks (Command Blocker)
 3. Pattern 3: Add Permissions (Tiered Access)
 4. Pattern 4: Complete Agent (All Patterns)
+5. Pattern 5: Deep Research Agent (Sessions & Skills)
 0. Exit
 ============================================================
 
-Select pattern (0-4):
+Select pattern (0-5):
 ```
 
 ### Running Patterns Directly
@@ -79,6 +80,9 @@ python -m patterns.03_with_permissions
 
 # Pattern 4: Complete Agent
 python -m patterns.04_complete_agent
+
+# Pattern 5: Deep Research Agent
+python -m patterns.05_deep_research
 ```
 
 ## Pattern Details
@@ -232,6 +236,78 @@ User: Calculate 123 * 456
 Claude: The result of 123 * 456 is 56,088.
 ```
 
+### Pattern 5: Deep Research Agent (Sessions & Skills) (`patterns/05_deep_research.py`)
+
+**Purpose:** Learn how to build advanced agents with session persistence and skill integration.
+
+**What You'll Learn:**
+- ClaudeSDKClient for automatic session management
+- Agent loop for multi-turn reasoning without custom loops
+- settingSources to load CLAUDE.md and skills
+- Session operations: continue, resume, fork
+- Web search integration for finding documentation
+- User feedback integration
+
+**Key Code:**
+```python
+from claude_agent_sdk import ClaudeSDKClient, query, ClaudeAgentOptions
+
+client = ClaudeSDKClient()
+
+# Agent creates session automatically
+async for message in query(
+    prompt="Research topic...",
+    options=ClaudeAgentOptions(
+        setting_sources=["project"],  # Loads CLAUDE.md + skills
+        allowed_tools=["Skill", "Read", "Bash", "web_search"],
+        effort="high"  # Deeper reasoning per turn
+    )
+):
+    print(message)
+
+# Continue same session
+session_id = client.get_most_recent_session_id()
+async for message in query(
+    prompt="Deepen analysis...",
+    options=ClaudeAgentOptions(session_id=session_id)
+):
+    print(message)
+```
+
+**Demo Flow:**
+1. Creates research agent with project settings and skills
+2. Researches a technical topic using web search
+3. Continues session to deepen analysis
+4. Generates comprehensive research report
+5. Demonstrates session persistence
+
+**Example Output:**
+```
+=== Pattern 5: Deep Research Agent Demo ===
+
+Loading project settings from CLAUDE.md...
+Found 5 skills: research, documentation, analysis, reporting, synthesis
+
+Session: sess_abc123
+Researching: Claude Agent SDK vs LangChain
+
+[web_search] Query: "Claude Agent SDK vs LangChain comparison"
+→ Found 15 results
+
+[Skill] Loading research methodology...
+→ Applied research framework
+
+Turn 1: Gathering information...
+→ Analyzed 8 sources
+→ Identified 3 key differentiators
+
+Turn 2: Deepening analysis...
+→ Comparative architecture analysis
+→ Use case evaluation
+
+Report generated: research_report.md
+```
+
 ## API Reference
 
 ### Tools
@@ -361,6 +437,9 @@ python -m pytest -v
 
 # Run specific test file
 python -m pytest tools/test_calculator.py -v
+
+# Test deep research agent
+python -m pytest patterns/test_deep_research.py -v
 ```
 
 ### Debug Mode

@@ -38,6 +38,8 @@ Example:
         ...
 """
 import sys
+import asyncio
+import importlib.util
 from pathlib import Path
 
 
@@ -78,6 +80,7 @@ def print_menu():
     print("2. Pattern 2: Add Hooks (Command Blocker)")
     print("3. Pattern 3: Add Permissions (Tiered Access)")
     print("4. Pattern 4: Complete Agent (All Patterns)")
+    print("5. Pattern 5: Deep Research Agent (Sessions & Skills)")
     print("0. Exit")
     print("="*60)
 
@@ -135,7 +138,7 @@ def main():
     """
     while True:
         print_menu()
-        choice = input("\nSelect pattern (0-4): ").strip()
+        choice = input("\nSelect pattern (0-5): ").strip()
 
         if choice == "0":
             print("Goodbye!")
@@ -168,8 +171,22 @@ def main():
             except ImportError as e:
                 print(f"Error importing pattern 4: {e}")
                 print("Make sure you're in the demo directory.")
+        elif choice == "5":
+            try:
+                # Import using importlib due to leading number in filename
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "pattern_05_deep_research",
+                    Path("patterns/05_deep_research.py")
+                )
+                pattern_05 = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(pattern_05)
+                asyncio.run(pattern_05.main())
+            except Exception as e:
+                print(f"Error running pattern 5: {e}")
+                print("Make sure you're in the demo directory.")
         else:
-            print("Invalid choice. Please select 0-4.")
+            print("Invalid choice. Please select 0-5.")
 
 
 if __name__ == "__main__":

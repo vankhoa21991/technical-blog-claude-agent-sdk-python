@@ -1,27 +1,9 @@
-{"timestamp": "2026-03-21T21:46:16.573380", "event": "PreToolUse", "tool": "calculator", "input": {"a": 1, "b": 2, "operation": "add"}, "tool_use_id": "test-id"}
-{"timestamp": "2026-03-21T21:46:16.573454", "event": "PostToolUse", "tool_use_id": "test-id", "output": {"content": [{"type": "text", "text": "3"}]}}
-{"timestamp": "2026-03-21T21:46:22.161245", "event": "PreToolUse", "tool": "calculate", "input": {"a": 25, "b": 4, "operation": "multiply"}, "tool_use_id": "test-1"}
-{"timestamp": "2026-03-21T21:46:22.161374", "event": "PostToolUse", "tool_use_id": "test-1", "output": {"content": [{"type": "text", "text": "100"}]}}
-{"timestamp": "2026-03-21T21:46:22.161449", "event": "PreToolUse", "tool": "bash", "input": {"command": "rm -rf /important/data"}, "tool_use_id": "test-2"}
-{"timestamp": "2026-03-21T21:46:22.161610", "event": "PreToolUse", "tool": "calculate", "input": {"a": 7, "b": 6, "operation": "multiply"}, "tool_use_id": "audit-test-1"}
-{"timestamp": "2026-03-21T21:46:22.161673", "event": "PostToolUse", "tool_use_id": "audit-test-1", "output": {"content": [{"type": "text", "text": "test"}]}}
-{"timestamp": "2026-03-21T21:46:22.161732", "event": "PreToolUse", "tool": "bash", "input": {"command": "echo test"}, "tool_use_id": "audit-test-2"}
-{"timestamp": "2026-03-21T21:46:22.161783", "event": "PostToolUse", "tool_use_id": "audit-test-2", "output": {"content": [{"type": "text", "text": "test"}]}}
-{"timestamp": "2026-03-21T21:46:33.278324", "event": "PreToolUse", "tool": "calculator", "input": {"a": 10, "b": 5, "operation": "multiply"}, "tool_use_id": "tool-use-1"}
-{"timestamp": "2026-03-21T21:46:33.279116", "event": "PreToolUse", "tool": "bash", "input": {"command": "echo 'Hello, Hooks!'"}, "tool_use_id": "tool-use-2"}
-{"timestamp": "2026-03-21T21:46:33.279466", "event": "PreToolUse", "tool": "calculator", "input": {"a": 100, "b": 25, "operation": "divide"}, "tool_use_id": "tool-use-3"}
-{"timestamp": "2026-03-21T21:46:33.279528", "event": "PostToolUse", "tool_use_id": "tool-use-1", "output": {"content": [{"type": "text", "text": "50"}]}}
-{"timestamp": "2026-03-21T21:46:33.280006", "event": "PostToolUse", "tool_use_id": "tool-use-2", "output": {"content": [{"type": "text", "text": "Hello, Hooks!"}]}}
-{"timestamp": "2026-03-21T21:46:33.280061", "event": "PostToolUse", "tool_use_id": "tool-use-3", "output": {"content": [{"type": "text", "text": "4"}]}}
-{"timestamp": "2026-03-21T21:46:33.280117", "event": "PreToolUse", "tool": "calculator", "input": {"a": 42, "b": 8, "operation": "add"}, "tool_use_id": "calc-use-1"}
-{"timestamp": "2026-03-21T21:46:33.280172", "event": "PostToolUse", "tool_use_id": "calc-use-1", "output": {"content": [{"type": "text", "text": "50"}]}}
-{"timestamp": "2026-03-21T21:46:41.488311", "event": "PreToolUse", "tool": "calculate", "input": {"a": 25, "b": 4, "operation": "multiply"}, "tool_use_id": "tool-0"}
-{"timestamp": "2026-03-21T21:46:41.488450", "event": "PostToolUse", "tool_use_id": "tool-0", "output": {"content": [{"type": "text", "text": "100"}]}}
-{"timestamp": "2026-03-21T21:46:41.488540", "event": "PreToolUse", "tool": "read_file", "input": {"path": "example.txt"}, "tool_use_id": "tool-1"}
-{"timestamp": "2026-03-21T21:46:41.488604", "event": "PostToolUse", "tool_use_id": "tool-1", "output": {"content": [{"type": "text", "text": "Simulated output for read_file"}]}}
-{"timestamp": "2026-03-21T21:46:41.488679", "event": "PreToolUse", "tool": "calculate", "input": {"a": 10, "b": 100, "operation": "multiply"}, "tool_use_id": "tool-2"}
-{"timestamp": "2026-03-21T21:46:41.488738", "event": "PostToolUse", "tool_use_id": "tool-2", "output": {"content": [{"type": "text", "text": "1000"}]}}
-{"timestamp": "2026-03-21T21:46:41.488800", "event": "PreToolUse", "tool": "calculate", "input": {"a": 1000, "b": 40, "operation": "multiply"}, "tool_use_id": "tool-3"}
-{"timestamp": "2026-03-21T21:46:41.488855", "event": "PostToolUse", "tool_use_id": "tool-3", "output": {"content": [{"type": "text", "text": "40000"}]}}
-{"timestamp": "2026-03-21T21:46:41.488940", "event": "PreToolUse", "tool": "calculate", "input": {"a": 40000, "b": 1.2, "operation": "multiply"}, "tool_use_id": "tool-4"}
-{"timestamp": "2026-03-21T21:46:41.489005", "event": "PostToolUse", "tool_use_id": "tool-4", "output": {"content": [{"type": "text", "text": "48000.0"}]}}
+{"timestamp": "2026-03-21T21:49:44.353069", "event": "PreToolUse", "tool": "calculator", "input": {"a": 1, "b": 2, "operation": "add"}, "tool_use_id": "test-id"}
+{"timestamp": "2026-03-21T21:49:44.353144", "event": "PostToolUse", "tool_use_id": "test-id", "output": {"content": [{"type": "text", "text": "3"}]}}
+{"timestamp": "2026-03-21T21:49:50.582629", "event": "PreToolUse", "tool": "calculate", "input": {"a": 25, "b": 4, "operation": "multiply"}, "tool_use_id": "test-1"}
+{"timestamp": "2026-03-21T21:49:50.582750", "event": "PostToolUse", "tool_use_id": "test-1", "output": {"content": [{"type": "text", "text": "100"}]}}
+{"timestamp": "2026-03-21T21:49:50.582822", "event": "PreToolUse", "tool": "bash", "input": {"command": "rm -rf /important/data"}, "tool_use_id": "test-2"}
+{"timestamp": "2026-03-21T21:49:50.582984", "event": "PreToolUse", "tool": "calculate", "input": {"a": 7, "b": 6, "operation": "multiply"}, "tool_use_id": "audit-test-1"}
+{"timestamp": "2026-03-21T21:49:50.583046", "event": "PostToolUse", "tool_use_id": "audit-test-1", "output": {"content": [{"type": "text", "text": "test"}]}}
+{"timestamp": "2026-03-21T21:49:50.583103", "event": "PreToolUse", "tool": "bash", "input": {"command": "echo test"}, "tool_use_id": "audit-test-2"}
+{"timestamp": "2026-03-21T21:49:50.583153", "event": "PostToolUse", "tool_use_id": "audit-test-2", "output": {"content": [{"type": "text", "text": "test"}]}}

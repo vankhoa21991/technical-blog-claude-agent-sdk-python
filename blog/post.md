@@ -3,26 +3,27 @@ title: "Building Production AI Agents with Claude Agent SDK Python: A Progressiv
 slug: claude-agent-sdk-python-progressive-patterns
 date: 2026-03-21
 author: AI Keytake
-description: Learn how to build production AI agents with Claude Agent SDK Python through 4 progressive patterns: custom tools, hooks, permissions, and complete agents.
+description: Learn how to build production AI agents with Claude Agent SDK Python through 5 progressive patterns: custom tools, hooks, permissions, complete agents, and sessions with skills.
 tags: ["AI", "Python", "Claude", "Agent SDK", "Tutorial"]
 difficulty: intermediate
-estimated_time: "45 minutes"
+estimated_time: "60 minutes"
 demo_url: https://github.com/your-repo/claude-agent-sdk-python-demo
 status: draft
 ---
 
 # Building Production AI Agents with Claude Agent SDK Python: A Progressive Pattern Guide
 
-**Why This Matters:** AI agents are transforming how we automate complex tasks, but building production-ready agents requires more than just API calls. You need control, security, and observability. The Claude Agent SDK Python provides exactly that through four powerful patterns that progressively add capabilities to your agents.
+**Why This Matters:** AI agents are transforming how we automate complex tasks, but building production-ready agents requires more than just API calls. You need control, security, and observability. The Claude Agent SDK Python provides exactly that through five powerful patterns that progressively add capabilities to your agents.
 
-In this guide, you'll learn how to build production AI agents from the ground up using **Claude Agent SDK Python**. We'll progress through four patterns:
+In this guide, you'll learn how to build production AI agents from the ground up using **Claude Agent SDK Python**. We'll progress through five patterns:
 
 1. **Custom Tools** - Extend Claude with your own Python functions
 2. **Hooks for Control** - Intercept and validate agent behavior
 3. **Permission Management** - Implement tiered access control
 4. **Complete Agent** - Combine all patterns into a production-ready system
+5. **Sessions & Skills** - Multi-turn reasoning with project context and domain expertise
 
-By the end, you'll have a fully functional AI agent with custom tools, security hooks, and permission management—ready for production deployment.
+By the end, you'll have a fully functional AI agent with custom tools, security hooks, permission management, and session-based research capabilities—ready for production deployment.
 
 ## What You'll Learn
 
@@ -1022,9 +1023,317 @@ cd demo
 python -m patterns.04_complete_agent
 ```
 
+## Pattern 5: Deep Research Agent with Sessions and Skills
+
+So far, we've built agents that respond to single prompts. But what if you need an agent that can:
+
+- Maintain conversation state across multiple interactions?
+- Access project-specific context and instructions?
+- Use specialized domain knowledge?
+- Allow users to provide feedback and refine the analysis?
+
+Enter **ClaudeSDKClient** and the **Agent Loop** - the most powerful pattern in the SDK.
+
+### The Scenario: Literature Review Agent
+
+Let's build an agent that conducts a literature review comparing three AI agent frameworks:
+- **LangGraph** (from LangChain)
+- **AutoGen** (from Microsoft)
+- **Claude Agent SDK** (from Anthropic)
+
+The agent will:
+1. Search the web for official documentation and comparisons
+2. Analyze architecture, features, and use cases
+3. Accept user feedback on what to focus on
+4. Provide refined analysis based on feedback
+5. Optionally explore alternative directions via session forking
+
+### Key Concepts
+
+**ClaudeSDKClient**: Automatic session management
+- Creates sessions automatically on first `query()`
+- Manages session lifecycle (create, continue, resume, fork)
+- No manual session handling required
+
+**Agent Loop**: Multi-turn reasoning without custom code
+- Agent automatically does multi-step analysis
+- Each turn can use tools, search web, read files
+- No need to write custom "thinking" loops
+- Control depth with `effort` parameter (low/medium/high/max)
+
+**settingSources**: Load CLAUDE.md and skills
+- `setting_sources=["project"]` loads:
+  - `CLAUDE.md` - Project instructions and context
+  - `.claude/skills/*/SKILL.md` - Domain expertise
+- Agent loads skills on-demand via `Skill` tool
+- Skills provide methodology without biasing analysis
+
+**Session Operations**:
+- **Continue**: Multiple `query()` calls with same `session_id`
+- **Resume**: Load specific session by ID for long-running tasks
+- **Fork**: Create new session from existing (explore alternatives)
+
+### Implementation
+
+**Setup**:
+```python
+from claude_agent_sdk import ClaudeSDKClient, query, ClaudeAgentOptions
+
+client = ClaudeSDKClient()
+```
+
+**Phase 1: Initial Research**
+```python
+async for message in query(
+    prompt="Conduct literature review comparing LangGraph, AutoGen, and Claude Agent SDK...",
+    options=ClaudeAgentOptions(
+        setting_sources=["project"],  # Load CLAUDE.md and skills
+        allowed_tools=["Skill", "Read", "Bash", "web_search"],
+        effort="high"  # Deeper reasoning per turn
+    )
+):
+    print(message.content)
+
+session_id = client.get_most_recent_session_id()
+```
+
+**Phase 2: User Feedback** (Manual CLI pause)
+```python
+direction = input("Focus on architecture or use cases? ")
+```
+
+**Phase 3: Refined Analysis** (Continue same session)
+```python
+async for message in query(
+    prompt=f"Great, focusing on {direction}. Provide detailed comparison...",
+    options=ClaudeAgentOptions(
+        setting_sources=["project"],
+        session_id=session_id  # Continue same session
+    )
+):
+    print(message.content)
+```
+
+**Phase 4: Fork Session** (Optional)
+```python
+async for message in query(
+    prompt="Now compare learning curves instead",
+    options=ClaudeAgentOptions(
+        setting_sources=["project"],
+        fork_from=session_id  # Fork: new session with copied history
+    )
+):
+    print(message.content)
+```
+
+### Skills System
+
+Skills are markdown files that provide domain expertise to the agent.
+
+**Structure**:
+```
+demo/.claude/skills/
+└── research/
+    └── SKILL.md
+```
+
+**Example Skill** (`research/SKILL.md`):
+```markdown
+---
+name: research
+description: Research methodology for deep analysis
+---
+
+# Research Methodology
+
+## Phase 1: Information Gathering
+- Search official documentation first
+- Find comparison guides and benchmarks
+- Identify key differentiators
+
+## Phase 2: Analysis
+- Compare architecture patterns
+- Evaluate use cases and trade-offs
+- Assess strengths and weaknesses
+
+## Phase 3: Synthesis
+- Identify patterns and trends
+- Highlight key differences
+- Provide concrete recommendations
+```
+
+When the agent needs research expertise, it automatically loads the skill via the `Skill` tool.
+
+### CLAUDE.md Integration
+
+`CLAUDE.md` provides project context automatically:
+
+```markdown
+# Claude Agent SDK Python - Progressive Patterns Demo
+
+## Project Overview
+This demo teaches four core patterns...
+
+## Quick Commands
+```bash
+python main.py  # Run interactive menu
+```
+
+## Architecture
+**Pattern 5 Features:**
+- ClaudeSDKClient: Automatic session management
+- Agent Loop: Multi-turn reasoning
+- settingSources: Loads CLAUDE.md and skills
+...
+```
+
+The agent uses this context to understand the project structure and available patterns.
+
+### Live Demo
+
+Run the demo:
+```bash
+cd demo
+python patterns/05_deep_research.py
+```
+
+**What you'll see:**
+
+1. **Phase 1: Initial Research**
+   - Agent searches web for documentation
+   - Analyzes all three frameworks
+   - Produces 1-2 page summary report
+   - Displays session ID
+
+2. **Phase 2: User Feedback**
+   - Demo pauses for your input
+   - Choose focus area: architecture, use cases, learning curve, performance, or custom
+
+3. **Phase 3: Refined Analysis**
+   - Agent continues same session (context preserved)
+   - Deepens analysis on chosen topic
+   - Builds on previous research
+
+4. **Phase 4: Optional Fork**
+   - Choose to explore alternative direction
+   - Fork creates new session with copied history
+   - Original session unchanged
+
+**Expected Output** (excerpt):
+```markdown
+# Literature Review: LangGraph vs AutoGen vs Claude Agent SDK
+
+## Overview
+This report compares three leading frameworks for building AI agents...
+
+## LangGraph
+**Architecture:** Graph-based agent orchestration...
+**Strengths:** Visual debugging, complex multi-agent workflows...
+**Weaknesses:** Steep learning curve, heavy abstraction...
+
+## AutoGen
+**Architecture:** Multi-agent conversation framework...
+**Strengths:** Natural multi-agent patterns, Microsoft backing...
+**Weaknesses:** Less mature ecosystem, Python-only...
+
+## Claude Agent SDK
+**Architecture:** Tool-calling with agent loop...
+**Strengths:** Simple API, built-in session management...
+**Weaknesses:** Newer framework, fewer examples...
+
+## Recommendation
+Choose based on your use case...
+```
+
+### Key Takeaways
+
+**ClaudeSDKClient** vs Manual Session Management:
+- ✅ Automatic session creation
+- ✅ Built-in continue/resume/fork
+- ✅ No manual state handling
+- ❌ Less control over session lifecycle
+
+**Agent Loop** vs Custom Thinking:
+- ✅ Multi-turn reasoning automatic
+- ✅ No custom "thinking" prompts
+- ✅ Handles tool use naturally
+- ❌ Less transparent reasoning process
+
+**settingSources** vs Manual Context:
+- ✅ Automatic CLAUDE.md loading
+- ✅ On-demand skill loading
+- ✅ Project context always available
+- ❌ Requires filesystem structure
+
+### When to Use Pattern 5
+
+**Use Pattern 5 when:**
+- Building research or analysis agents
+- Need multi-turn reasoning with user feedback
+- Want session persistence across interactions
+- Have domain expertise in skills format
+- Exploring alternative directions (fork)
+
+**Consider alternatives when:**
+- Simple single-turn tasks (use Pattern 1)
+- No need for user feedback (use Pattern 4)
+- Custom session handling required
+- Don't have skills or CLAUDE.md
+
+### Production Tips
+
+1. **Effort Levels**: Use `effort="high"` for complex research, `effort="low"` for quick tasks
+2. **Session Management**: Save session IDs for long-running tasks (resumable research)
+3. **Skills**: Keep skills focused on methodology, not specific frameworks (avoids bias)
+4. **Error Handling**: Wrap `query()` calls in try/except for production robustness
+5. **Web Search**: Always include `web_search` in `allowed_tools` for research tasks
+
+### Next Steps
+
+Try the demo:
+```bash
+cd demo
+python patterns/05_deep_research.py
+```
+
+Explore the code:
+```bash
+cat demo/patterns/05_deep_research.py
+cat demo/CLAUDE.md
+cat demo/.claude/skills/research/SKILL.md
+```
+
+Read the SDK documentation:
+- [Sessions](https://platform.claude.com/docs/en/agent-sdk/sessions)
+- [Agent Loop](https://platform.claude.com/docs/en/agent-sdk/agent-loop)
+- [Claude Code Features](https://platform.claude.com/docs/en/agent-sdk/claude-code-features)
+
+## Summary
+
+In this blog series, we've progressed from basic tools to advanced agents:
+
+| Pattern | Capability | Use Case |
+|---------|-----------|----------|
+| 1. Custom Tools | Extend Claude with Python functions | Calculators, APIs, utilities |
+| 2. Hooks | Intercept agent behavior | Security, validation, audit |
+| 3. Permissions | Control tool access | Tiered access, safety |
+| 4. Complete Agent | All patterns combined | Production agents |
+| 5. Sessions & Skills | Multi-turn reasoning with context | Research, analysis, feedback |
+
+**Pattern 5 is the most powerful** - it enables agents that:
+- Maintain state across interactions
+- Learn from project context (CLAUDE.md)
+- Use domain expertise (skills)
+- Iterate with human feedback
+- Explore alternatives (fork)
+
+This is how you build production AI agents that can tackle complex, multi-step research tasks while maintaining context and adapting to user feedback.
+
+**Ready to build your own agent?** Start with Pattern 1, progress through the patterns, and you'll have production-ready agents in no time.
+
 ## Best Practices for Production AI Agents
 
-After implementing all four patterns, here are the key best practices for production deployments:
+After implementing all five patterns, here are the key best practices for production deployments:
 
 ### 1. Start Simple, Add Complexity Gradually
 
@@ -1033,6 +1342,7 @@ Begin with Pattern 1 (custom tools) and add patterns as needed:
 - **V1**: Add permissions (Pattern 3)
 - **V2**: Add security hooks (Pattern 2)
 - **Production**: Complete agent (Pattern 4)
+- **Advanced**: Research agent with sessions (Pattern 5)
 
 ### 2. Security by Default
 
@@ -1058,6 +1368,9 @@ async def test_all_patterns():
 
     # Test Pattern 4: Complete agent
     assert await test_complete_agent()
+
+    # Test Pattern 5: Sessions & Skills
+    assert await test_deep_research_agent()
 
     print("✓ All patterns tested successfully")
 ```
@@ -1123,12 +1436,13 @@ async def calculate_tool_v2(input_data):
 
 ## Conclusion: Building Production AI Agents
 
-You've now learned how to build production AI agents with Claude Agent SDK Python through four progressive patterns:
+You've now learned how to build production AI agents with Claude Agent SDK Python through five progressive patterns:
 
 **Pattern 1: Custom Tools** - Extend Claude with your own Python functions
 **Pattern 2: Hooks for Control** - Intercept and validate agent behavior
 **Pattern 3: Permission Management** - Implement tiered access control
 **Pattern 4: Complete Agent** - Combine all patterns into production-ready systems
+**Pattern 5: Sessions & Skills** - Multi-turn reasoning with project context and domain expertise
 
 ### Key Takeaways
 
@@ -1136,10 +1450,11 @@ You've now learned how to build production AI agents with Claude Agent SDK Pytho
 2. **Add hooks for security** - Implement PreToolUse and PostToolUse hooks
 3. **Control access with permissions** - Use `allowed_tools` and `permission_mode`
 4. **Combine all patterns** - Build complete agents for production
+5. **Add sessions for research** - Use ClaudeSDKClient for multi-turn reasoning with context
 
 ### Next Steps
 
-1. **Try the demo**: Run all four patterns locally
+1. **Try the demo**: Run all five patterns locally
    ```bash
    cd demo
    python main.py
@@ -1148,7 +1463,8 @@ You've now learned how to build production AI agents with Claude Agent SDK Pytho
 2. **Build your own tools**: Create custom tools for your use case
 3. **Add security**: Implement hooks for your threat model
 4. **Configure permissions**: Set up tiered access for your users
-5. **Deploy to production**: Follow best practices for monitoring and logging
+5. **Add sessions for research**: Use ClaudeSDKClient for multi-turn agents
+6. **Deploy to production**: Follow best practices for monitoring and logging
 
 ### Resources
 
